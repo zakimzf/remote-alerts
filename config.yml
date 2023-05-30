@@ -94,7 +94,7 @@ newsEmoji: ! "\U0001F4F0" # 📰 or '\U0001F680' 🚀
 # Debug Params (Avoid touching it if there's no issues)
 
 # If False we do not print unnecessary messages
-debug: False
+debug: True
 # Skip alert at higher timeframes when change in % did not change value by threshold in percentage points
 alertSkipThreshold: 0.75
 # Interval for clearing array to prevent memory can handle up to 12h+ depending on system
