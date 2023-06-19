@@ -54,6 +54,7 @@ extractInterval: 1s
 
 # Blacklist only mode, if enabled, pairs in blacklist will be IGNORED it DOES NOT IMPACT pairsOfInterest
 blacklist:
+  - BTTCUSDT
   - NBTUSDT
 #  - ETHUSDT
 
