@@ -18,8 +18,8 @@ class ReportGenerator:
 
         self.logger = logging.getLogger("report-generator")
 
-    def send_pump_message(self, symbol, interval, change, price):
-        self.telegram.send_message(
+    async def send_pump_message(self, symbol, interval, change, price):
+        await self.telegram.send_message(
             """\
 {0} *{1} [{2} Interval]* | Change: _{3:.3f}%_ | Price: _{4:.10f}_
 
@@ -30,8 +30,8 @@ Open in [Binance Spot](https://www.binance.com/en/trade/{1})\
             is_alert_chat=False,
         )
 
-    def send_dump_message(self, symbol, interval, change, price):
-        self.telegram.send_message(
+    async def send_dump_message(self, symbol, interval, change, price):
+        await self.telegram.send_message(
             """\
 {0} *{1} [{2} Interval]* | Change: _{3:.3f}%_ | Price: _{4:.10f}_
 
@@ -42,7 +42,7 @@ Open in [Binance Spot](https://www.binance.com/en/trade/{1})\
             is_alert_chat=False,
         )
 
-    def send_new_listings(self, symbols_to_add):
+    async def send_new_listings(self, symbols_to_add):
         message = """\
 *New Listings*"
 {0} new pairs found, adding to monitored list."
@@ -56,9 +56,9 @@ Open in [Binance Spot](https://www.binance.com/en/trade/{1})\
         for symbol in symbols_to_add:
             message += "- _{0}_\n".format(symbol)
 
-        self.telegram.send_news_message(message, is_alert_chat=True)
+        await self.telegram.send_news_message(message, is_alert_chat=True)
 
-    def send_pump_dump_message(
+    async def send_pump_dump_message(
         self,
         asset,
         chart_intervals,
@@ -135,9 +135,9 @@ Open in [Binance Spot](https://www.binance.com/en/trade/{0})\
             message,
         )
 
-        self.telegram.send_news_message(news_message)
+        await self.telegram.send_news_message(news_message)
 
-    def send_top_pump_dump_statistics_report(
+    async def send_top_pump_dump_statistics_report(
         self,
         assets,
         interval,
@@ -188,7 +188,7 @@ Open in [Binance Spot](https://www.binance.com/en/trade/{0})\
                 message += "\n"
             message += self.generate_additional_statistics_report(assets, interval)
 
-        self.telegram.send_report_message(message, is_alert_chat=True)
+        await self.telegram.send_report_message(message, is_alert_chat=True)
 
     def generate_additional_statistics_report(self, assets, interval):
         up = 0

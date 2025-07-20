@@ -6,10 +6,6 @@ apiUrl: https://api.binance.com/api/v3/ticker/price
 
 # Intervals which are monitored. Add or remove intervals as you like.
 chartIntervals:
-  - 1s
-  - 5s
-  - 15s
-  - 30s
   - 1m
   - 5m
   - 15m
@@ -20,17 +16,13 @@ chartIntervals:
 
 # Values in % at which an alert is triggered. Ensure interval exists in chartIntervals as well.
 outlierIntervals:
-  "1s": 0.02
-  "5s": 0.05
-  "15s": 0.06
-  "30s": 0.08
-  "1m": 0.1
-  "5m": 0.10
-  "15m": 0.15
-  "30m": 0.20
-  "1h": 0.30
-  "3h": 0.4
-  "6h": 0.5
+  "1m": 0.01
+  "5m": 0.02
+  "15m": 0.03
+  "30m": 0.04
+  "1h": 0.05
+  "3h": 0.1
+  "6h": 0.2
 
 # Used for telegram bot updates
 
@@ -79,9 +71,11 @@ additionalStatsEnabled: True
 noOfReportedCoins: 5
 # Intervals for top pump and dump to be sent, ensure its in chartIntervals + outlierIntervals as well
 topReportIntervals:
+  - 1m
+  - 5m
   - 15m
-  - 1h
   - 30m
+  - 1h
   - 3h
   - 6h
 

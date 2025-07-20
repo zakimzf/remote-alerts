@@ -1,9 +1,10 @@
 import logging
+import asyncio
 
 from concurrent.futures import ThreadPoolExecutor
-from telegram import Bot, ParseMode
+from telegram import Bot
+from telegram.constants import ParseMode
 from telegram.error import RetryAfter
-from telegram.utils.request import Request
 from time import sleep
 
 
@@ -26,54 +27,45 @@ class TelegramSender:
         self.top_emoji = top_emoji
         self.news_emoji = news_emoji
 
-        self.telegram_executor = ThreadPoolExecutor(max_workers=3)
-
-        self.request = Request(con_pool_size=3)
-        self.bot = Bot(self.token, request=self.request)
+        self.bot = Bot(self.token)
 
         self.logger = logging.getLogger("telegram-sender")
 
     def is_alert_chat_enabled(self):
         return self.alert_chat_id != 0 and self.alert_chat_id != self.chat_id
 
-    def send_message(self, message, is_alert_chat=False):
+    async def send_message(self, message, is_alert_chat=False):
         chat_id = self.chat_id if not is_alert_chat else self.alert_chat_id
 
-        def push_message(bot, chat_id, message):
-            self.logger.info(message)
+        self.logger.info(message)
+        try:
+            await self.bot.send_message(
+                chat_id=chat_id,
+                text=message,
+                parse_mode=ParseMode.MARKDOWN,
+                disable_web_page_preview=True,
+            )
+        except RetryAfter as e:
+            self.logger.error(
+                "Flood limit is exceeded. Sleep {} seconds.", e.retry_after
+            )
+            await asyncio.sleep(e.retry_after)
+            # Resend message
+            await self.send_message(message, is_alert_chat)
+        except Exception as e:
+            self.logger.error(str(e))
 
-            try:
-                bot.send_message(
-                    chat_id=chat_id,
-                    text=message,
-                    parse_mode=ParseMode.MARKDOWN,
-                    disable_web_page_preview=True,
-                )
-            except RetryAfter as e:
-                self.logger.error(
-                    "Flood limit is exceeded. Sleep {} seconds.", e.retry_after
-                )
-                sleep(e.retry_after)
-                # Resend message to the queue
-                self.send_message(message, is_alert_chat)
-            except Exception as e:
-                self.logger.error(str(e))
-
-        self.telegram_executor.submit(
-            lambda p: push_message(*p), (self.bot, chat_id, message)
-        )
-
-    def send_generic_message(self, message, args=None, is_alert_chat=False):
+    async def send_generic_message(self, message, args=None, is_alert_chat=False):
         if args is not None:
             message = message.format(args)
-        self.send_message(self.bot_emoji + " " + message, is_alert_chat)
+        await self.send_message(self.bot_emoji + " " + message, is_alert_chat)
 
-    def send_report_message(self, message, args=None, is_alert_chat=False):
+    async def send_report_message(self, message, args=None, is_alert_chat=False):
         if args is not None:
             message = message.format(args)
-        self.send_message(self.top_emoji + " " + message, is_alert_chat)
+        await self.send_message(self.top_emoji + " " + message, is_alert_chat)
 
-    def send_news_message(self, message, args=None, is_alert_chat=False):
+    async def send_news_message(self, message, args=None, is_alert_chat=False):
         if args is not None:
             message = message.format(args)
-        self.send_message(self.news_emoji + " " + message, is_alert_chat)
+        await self.send_message(self.news_emoji + " " + message, is_alert_chat)

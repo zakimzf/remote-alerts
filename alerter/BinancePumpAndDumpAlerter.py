@@ -1,6 +1,7 @@
 import logging
 import requests
 import time
+import asyncio
 
 from time import sleep
 from utils import ConversionUtils
@@ -162,7 +163,7 @@ class BinancePumpAndDumpAlerter:
 
         return filtered_assets
 
-    def update_all_monitored_assets_and_send_news_messages(
+    async def update_all_monitored_assets_and_send_news_messages(
         self,
         monitored_assets,
         exchange_assets,
@@ -182,7 +183,7 @@ class BinancePumpAndDumpAlerter:
                 extract_interval,
             )
 
-            self.report_generator.send_pump_dump_message(
+            await self.report_generator.send_pump_dump_message(
                 asset,
                 chart_intervals,
                 outlier_intervals,
@@ -210,10 +211,13 @@ class BinancePumpAndDumpAlerter:
                     data_points,
                     interval,
                 )
-                break
+                continue
             # Gets change in % from last alert trigger.
             price_delta = asset["price"][-1] - asset["price"][-1 - data_points]
-            change = price_delta / asset["price"][-1]
+            if asset["price"][-1] == 0:
+                change = 0
+            else:
+                change = price_delta / asset["price"][-1]
             self.logger.debug(
                 "Calculated asset: %s for interval: %s with change: %s",
                 asset["symbol"],
@@ -229,7 +233,7 @@ class BinancePumpAndDumpAlerter:
 
         return asset
 
-    def reset_prices_data_when_due(
+    async def reset_prices_data_when_due(
         self,
         initial_time,
         current_time,
@@ -242,7 +246,7 @@ class BinancePumpAndDumpAlerter:
 
             message = "Emptying price data to prevent memory errors."
             self.logger.debug(message)
-            self.telegram.send_generic_message(message, is_alert_chat=True)
+            await self.telegram.send_generic_message(message, is_alert_chat=True)
 
             # Do not delete everything, only elements older than the last monitored interval
             lastInterval = "1s"
@@ -258,7 +262,7 @@ class BinancePumpAndDumpAlerter:
 
         return initial_time
 
-    def add_new_asset_listings(
+    async def add_new_asset_listings(
         self,
         initial_assets,
         filtered_assets,
@@ -292,11 +296,11 @@ class BinancePumpAndDumpAlerter:
         self.logger.debug("Filtered new listings found: %s.", filtered_symbols_to_add)
 
         if len(filtered_symbols_to_add) > 0:
-            self.report_generator.send_new_listings(filtered_symbols_to_add)
+            await self.report_generator.send_new_listings(filtered_symbols_to_add)
 
         return filtered_assets
 
-    def check_and_send_top_pump_dump_statistics_report(
+    async def check_and_send_top_pump_dump_statistics_report(
         self,
         assets,
         current_time,
@@ -323,7 +327,7 @@ class BinancePumpAndDumpAlerter:
                     "Sending out top pump dump report. Interval: %s.", interval
                 )
 
-                self.report_generator.send_top_pump_dump_statistics_report(
+                await self.report_generator.send_top_pump_dump_statistics_report(
                     assets,
                     interval,
                     top_pump_enabled,
@@ -332,7 +336,7 @@ class BinancePumpAndDumpAlerter:
                     no_of_reported_coins,
                 )
 
-    def run(self):
+    async def run(self):
 
         initial_assets = self.retrieve_exchange_assets(self.api_url)
 
@@ -345,9 +349,9 @@ class BinancePumpAndDumpAlerter:
         )
 
         message = "*Bot has started.* Following _{0}_ pairs."
-        self.telegram.send_generic_message(message, len(filtered_assets))
+        await self.telegram.send_generic_message(message, len(filtered_assets))
         if self.telegram.is_alert_chat_enabled():
-            self.telegram.send_generic_message(
+            await self.telegram.send_generic_message(
                 message,
                 len(filtered_assets),
                 is_alert_chat=True,
@@ -360,7 +364,7 @@ class BinancePumpAndDumpAlerter:
             exchange_assets = self.retrieve_exchange_assets(self.api_url)
 
             if self.check_new_listing_enabled:
-                filtered_assets = self.add_new_asset_listings(
+                filtered_assets = await self.add_new_asset_listings(
                     initial_assets,
                     filtered_assets,
                     exchange_assets,
@@ -372,7 +376,7 @@ class BinancePumpAndDumpAlerter:
                 # Reset initial exchange asset
                 initial_assets = exchange_assets
 
-            self.update_all_monitored_assets_and_send_news_messages(
+            await self.update_all_monitored_assets_and_send_news_messages(
                 filtered_assets,
                 exchange_assets,
                 loop_time,
@@ -382,7 +386,7 @@ class BinancePumpAndDumpAlerter:
                 self.outlier_intervals,
             )
 
-            self.check_and_send_top_pump_dump_statistics_report(
+            await self.check_and_send_top_pump_dump_statistics_report(
                 filtered_assets,
                 loop_time,
                 self.top_report_intervals,
@@ -392,7 +396,7 @@ class BinancePumpAndDumpAlerter:
                 self.no_of_reported_coins,
             )
 
-            self.initial_time = self.reset_prices_data_when_due(
+            self.initial_time = await self.reset_prices_data_when_due(
                 self.initial_time,
                 loop_time,
                 self.reset_interval,
@@ -414,4 +418,4 @@ class BinancePumpAndDumpAlerter:
             if end_loop_time < start_loop_time + self.extract_interval:
                 sleep_time = start_loop_time + self.extract_interval - end_loop_time
                 self.logger.debug("Now sleeping %f seconds.", sleep_time)
-                sleep(sleep_time)
+                await asyncio.sleep(sleep_time)

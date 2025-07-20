@@ -1,6 +1,7 @@
 import colorlog, logging
 import os
 import yaml
+import asyncio
 
 from alerter import BinancePumpAndDumpAlerter
 from reporter import ReportGenerator
@@ -42,7 +43,7 @@ logger.info("Using config file: %s", config_file)
 logger.debug("Config: %s", config)
 
 
-def main():
+async def main():
     telegram = TelegramSender(
         token=config["telegramToken"],
         chat_id=config["telegramChatId"],
@@ -85,8 +86,8 @@ def main():
         report_generator=reporter,
     )
 
-    alerter.run()
+    await alerter.run()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
