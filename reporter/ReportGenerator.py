@@ -23,9 +23,9 @@ class ReportGenerator:
             """\
 {0} *{1} [{2} Interval]* | Change: _{3:.3f}%_ | Price: _{4:.10f}_
 
-Open in [Binance Spot](https://www.binance.com/en/trade/{1})\
+Open in [Binance Spot](binance://app.binance.com/en/trade/spot/{1}_USDT)
             """.format(
-                self.pump_emoji, symbol, interval, change * 100, price
+                self.pump_emoji, symbol.replace("USDT", ""), interval, change * 100, price
             ),
             is_alert_chat=False,
         )
@@ -35,9 +35,9 @@ Open in [Binance Spot](https://www.binance.com/en/trade/{1})\
             """\
 {0} *{1} [{2} Interval]* | Change: _{3:.3f}%_ | Price: _{4:.10f}_
 
-Open in [Binance Spot](https://www.binance.com/en/trade/{1})\
+Open in [Binance Spot](binance://app.binance.com/en/trade/spot/{1}_USDT)
             """.format(
-                self.dump_emoji, symbol, interval, change * 100, price
+                self.dump_emoji, symbol.replace("USDT", ""), interval, change * 100, price
             ),
             is_alert_chat=False,
         )
@@ -125,9 +125,9 @@ Open in [Binance Spot](https://www.binance.com/en/trade/{1})\
 Price: _{3:.10f}_ | Volume: _{4}_
 
 {5}
-Open in [Binance Spot](https://www.binance.com/en/trade/{0})\
+Open in [Binance Spot](binance://app.binance.com/en/trade/spot/{0}_USDT)
             """.format(
-            asset["symbol"],
+            asset["symbol"].replace("USDT", ""),
             no_of_alerts,
             datetime.fromtimestamp(current_time).strftime("%Y-%m-%d %H:%M:%S"),
             asset["price"][-1],
