@@ -1,5 +1,6 @@
 import logging
-
+import os
+import time
 from datetime import datetime
 
 
@@ -66,6 +67,17 @@ Open in [Binance Spot](binance://app.binance.com/en/trade/spot/{1}_USDT)
         current_time,
         dump_enabled=True,
     ):
+        # Check if the bot is sleeping
+        if os.path.exists("sleep.lock"):
+            with open("sleep.lock", "r") as f:
+                wakeup_time = float(f.read())
+            if time.time() < wakeup_time:
+                self.logger.info("Bot is sleeping. Skipping alert.")
+                return
+            else:
+                os.remove("sleep.lock")
+                self.logger.info("Sleep duration is over. Waking up.")
+
         change_biggest_delta = 0
         no_of_alerts = 0
         message = ""
