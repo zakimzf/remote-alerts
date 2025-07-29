@@ -1,4 +1,5 @@
 colorlog
 requests
 pyyaml
-python-telegram-bot
+pyTelegramBotAPI
+pytz
